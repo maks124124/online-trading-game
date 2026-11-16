@@ -1,0 +1,819 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRI TRADING SIMULATOR</title>
+<style>
+:root {
+  --bg:#0b1018; --panel:#121b28; --line:#26364a;
+  --text:#e8eef7; --muted:#8fa1b7;
+  --green:#16c784; --red:#ea3943; --gold:#e8b84d;
+}
+* { box-sizing:border-box }
+body {
+  margin:0;
+  background:radial-gradient(circle at 50% -20%,#1a2a3d 0,#0b1018 48%);
+  color:var(--text);
+  font:15px/1.45 Arial,sans-serif;
+}
+.wrap { max-width:1180px; margin:auto; padding:24px }
+.top {
+  display:flex; justify-content:space-between; align-items:center;
+  gap:16px; margin-bottom:20px;
+}
+.brand { font-weight:900; letter-spacing:1.5px; font-size:19px }
+.brand span { color:var(--gold) }
+.demo {
+  color:var(--gold); border:1px solid #735d2d;
+  background:#342a15; padding:6px 10px;
+  border-radius:20px; font-size:12px;
+}
+.grid { display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:16px }
+.panel {
+  background:linear-gradient(160deg,#152131,#101823);
+  border:1px solid var(--line); border-radius:16px;
+  padding:18px; box-shadow:0 12px 35px #0003;
+}
+.market-head {
+  display:flex; justify-content:space-between;
+  align-items:center; gap:12px; flex-wrap:wrap;
+}
+.asset { font-size:18px; font-weight:800 }
+.sub { color:var(--muted); font-size:12px }
+.price { font-size:27px; font-weight:800; font-variant-numeric:tabular-nums }
+.positive { color:var(--green) }
+.negative { color:var(--red) }
+select,input {
+  background:#0c1420; color:var(--text);
+  border:1px solid var(--line); border-radius:9px;
+  padding:11px; width:100%; outline:none;
+}
+label { display:block; color:var(--muted); font-size:12px; margin:14px 0 6px }
+.chartbox {
+  margin-top:16px; background:#0b131e;
+  border:1px solid #223247; border-radius:12px;
+  padding:8px; position:relative;
+}
+canvas { display:block; width:100%; height:340px }
+.chart-foot {
+  display:flex; justify-content:space-between;
+  color:var(--muted); font-size:11px; padding:5px 7px;
+}
+.stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:12px }
+.stat { background:#0d1622; border:1px solid #203044; padding:11px; border-radius:10px }
+.stat small { color:var(--muted); display:block }
+.stat b { font-size:17px }
+.balance { font-size:25px; font-weight:800; margin:4px 0 2px }
+.muted { color:var(--muted) }
+.side-buttons { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:15px }
+.tradebtn {
+  border:0; border-radius:10px; padding:13px;
+  color:#07130f; font-weight:900; font-size:15px; cursor:pointer;
+}
+.buy { background:var(--green) }
+.sell { background:var(--red); color:white }
+.tradebtn:hover, .forcebtn:hover { filter:brightness(1.12) }
+button:disabled { opacity:.45; cursor:not-allowed }
+.note { font-size:11px; color:var(--muted); margin-top:12px }
+.section-title { font-weight:800; margin:0 0 12px }
+.trades { margin-top:16px }
+.trade {
+  display:flex; justify-content:space-between; gap:10px;
+  align-items:center; padding:11px 0; border-top:1px solid #26364a;
+}
+.trade:first-of-type { border-top:0 }
+.tag { font-size:10px; border-radius:6px; padding:3px 6px; background:#18352d; color:var(--green) }
+.tag.selltag { background:#3a2027; color:#ff7880 }
+.empty { color:var(--muted); font-size:13px; padding:10px 0 }
+.reset {
+  background:transparent; border:1px solid var(--line);
+  color:var(--muted); padding:7px 10px; border-radius:8px; cursor:pointer;
+}
+.row { display:flex; justify-content:space-between; align-items:center; gap:10px }
+.market-control {
+  display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:13px;
+}
+.forcebtn {
+  border:0; border-radius:10px; padding:12px;
+  font-weight:900; font-size:14px; cursor:pointer;
+}
+.force-up { background:#145b42; color:#6dffc0 }
+.force-down { background:#672b32; color:#ff9da4 }
+.market-status {
+  margin-top:9px; padding:9px 11px;
+  border:1px solid var(--line); border-radius:9px;
+  color:var(--muted); font-size:12px; text-align:center;
+}
+
+body { background:radial-gradient(ellipse at 12% 0%,#16304a 0,transparent 38%),radial-gradient(ellipse at 92% 12%,#152b27 0,transparent 30%),#070b12; }
+.wrap { max-width:1320px; padding:28px; }
+.brand { font-size:21px; letter-spacing:2px; }
+.panel { background:linear-gradient(155deg,rgba(19,32,49,.97),rgba(10,18,30,.98)); border:1px solid rgba(91,122,157,.25); border-radius:20px; box-shadow:0 18px 55px #0006,inset 0 1px 0 #ffffff0a; padding:21px; }
+.chartbox { background:linear-gradient(180deg,#091321,#0a111c); border-color:#263b53; }
+.stat { background:linear-gradient(145deg,#101e2e,#0b1420); border-color:#26394f; border-radius:13px; }
+input,select { background:#091321; border:1px solid #2b4059; border-radius:11px; color:#eff6ff; transition:border-color .18s,box-shadow .18s; }
+input:focus,select:focus { border-color:#4e9cff; box-shadow:0 0 0 3px #368bff20; }
+label { color:#a9bad0; font-weight:700; letter-spacing:.2px; }
+.tradebtn,.forcebtn,.reset { transition:transform .16s ease,filter .16s ease,box-shadow .16s ease; }
+.tradebtn { border-radius:12px; padding:14px 12px; letter-spacing:.5px; box-shadow:0 7px 18px #0003; }
+.tradebtn:hover,.forcebtn:hover,.reset:hover { transform:translateY(-1px); filter:brightness(1.1); }
+.buy { background:linear-gradient(135deg,#20e2a2,#0fb981); box-shadow:0 8px 22px #10c98b2b; }
+.sell { background:linear-gradient(135deg,#ff6478,#e83d59); box-shadow:0 8px 22px #ed47632b; }
+.force-up { background:linear-gradient(135deg,#145d49,#123d35); }
+.force-down { background:linear-gradient(135deg,#682d3a,#48202d); }
+.reset { border-radius:9px; background:#142236; border-color:#2c415a; color:#c7d7ea; }
+.balance { color:#f5fbff; font-size:30px; letter-spacing:-.7px; }
+.price { letter-spacing:-.8px; }
+.tag { padding:4px 8px; border-radius:20px; font-weight:800; }
+.trade { border-top-color:#25384e; }
+.risk-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.risk-grid label { margin-top:12px; }
+.trade-risk { margin-top:7px; color:#a9bad0; font-size:12px; }
+.trade-risk b { color:#edf4ff; }
+.market-status { background:#0b1624; border-color:#263b53; border-radius:11px; }
+.demo { border-color:#8a6c31; background:#302611; }
+@media(max-width:800px) { .wrap { padding:14px; } }
+
+@media(max-width:800px) {
+  .grid { grid-template-columns:1fr }
+  .wrap { padding:14px }
+  .stats { grid-template-columns:1fr 1fr 1fr }
+  canvas { height:280px }
+}
+@media(max-width:420px) {
+  .stats { grid-template-columns:1fr 1fr }
+  .price { font-size:23px }
+  .top { align-items:flex-start; flex-direction:column }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="brand">TRI <span>TRADING</span> SIMULATOR</div>
+  <div class="demo">● ДЕМО-РЕЖИМ · НЕ НАСТОЯЩИЕ ДЕНЬГИ</div>
+</header>
+
+<div class="grid">
+<main>
+
+<section class="panel">
+  <div class="market-head">
+    <div>
+      <div class="asset" id="assetName">Золото / XAUUSD</div>
+      <div class="sub">Учебный рынок · цена меняется автоматически</div>
+    </div>
+
+    <div style="text-align:right">
+      <div class="price" id="price">$2,650.00</div>
+      <div class="sub" id="change">Изменение: 0.00%</div>
+    </div>
+
+    <div style="min-width:145px">
+      <select id="asset">
+        <option value="gold">Золото · XAUUSD</option>
+        <option value="btc">Bitcoin · BTCUSD</option>
+        <option value="eth">Ethereum · ETHUSD</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="chartbox">
+    <canvas id="chart" width="1000" height="400"></canvas>
+    <div class="chart-foot">
+      <span>Последние свечи · таймфрейм 1м</span>
+      <span>До закрытия: <b id="candleTimer">01:00</b></span>
+    </div>
+  </div>
+
+  <div class="note">Общий онлайн-рынок: цена и свечи синхронизируются у всех игроков. Управление направлением защищено паролем администратора.</div>
+  <div class="market-control">
+    <button class="forcebtn force-up" id="forceUp">▲ РЫНОК ВВЕРХ</button>
+    <button class="forcebtn force-down" id="forceDown">▼ РЫНОК ВНИЗ</button>
+  </div>
+
+  <div class="market-status" id="marketStatus">
+    Обычный случайный рынок
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <small>Текущая цена</small>
+      <b id="statPrice">$2,650.00</b>
+    </div>
+    <div class="stat">
+      <small>Свечей в графике</small>
+      <b id="candleCount">40</b>
+    </div>
+    <div class="stat">
+      <small>Открытые сделки</small>
+      <b id="activeCount">0</b>
+    </div>
+  </div>
+</section>
+
+<section class="panel trades">
+  <div class="row">
+    <h3 class="section-title">Мои сделки</h3>
+    <button class="reset" id="closeAll" style="color:#fff;border-color:#8b3942">
+      Закрыть все сделки
+    </button>
+  </div>
+
+  <div class="row" style="margin:-3px 0 10px">
+    <span class="muted">Общий результат открытых сделок</span>
+    <b id="openTotal" class="positive">$0.00</b>
+  </div>
+
+  <div id="trades">
+    <div class="empty">Пока нет открытых сделок. Выбери сумму и нажми «Купить» или «Продать».</div>
+  </div>
+</section>
+
+</main>
+
+<aside>
+<section class="panel">
+
+  <div class="row">
+    <span class="muted">Демо-баланс</span>
+    <button class="reset" id="reset">Сбросить</button>
+  </div>
+
+  <div class="balance" id="balance">$0.00</div>
+  <div class="sub">Свободный демо-баланс</div>
+
+  <label for="cashAmount">Сумма пополнения / вывода ($)</label>
+  <input id="cashAmount" type="number" min="0.01" step="0.01" value="100">
+
+  <label for="cashPassword">Пароль администратора для пополнения и вывода</label>
+  <input id="cashPassword" type="password" autocomplete="off" placeholder="Введи пароль">
+
+  <div class="side-buttons">
+    <button class="tradebtn buy" id="deposit">＋ ПОПОЛНИТЬ</button>
+    <button class="tradebtn sell" id="withdraw">− ВЫВЕСТИ</button>
+  </div>
+  <div class="note" id="cashStatus" role="status" aria-live="polite">
+    Для операций с балансом введи сумму и пароль.
+  </div>
+
+  <label for="amount">Маржа сделки ($)</label>
+  <input id="amount" type="number" min="1" step="1" value="100">
+
+  <div class="risk-grid">
+    <div><label for="stopLoss">Стоп-лосс (%)</label><input id="stopLoss" type="number" min="0.01" max="100" step="0.1" placeholder="Например 20"></div>
+    <div><label for="takeProfit">Тейк-профит (%)</label><input id="takeProfit" type="number" min="0.01" max="10000" step="0.1" placeholder="Например 40"></div>
+  </div>
+  <div class="note">Уровни задаются в процентах от цены входа. Пустое поле — уровень отключён.</div>
+
+  <label for="leverage">Кредитное плечо</label>
+  <div class="row" style="gap:12px">
+    <input id="leverage" type="range" min="1" max="1000" step="1" value="10"
+      style="padding:0;accent-color:var(--gold)">
+    <b id="leverageValue" style="min-width:62px;text-align:right;color:var(--gold)">10×</b>
+  </div>
+
+  <div class="row sub">
+    <span>1×</span><span>1000×</span>
+  </div>
+
+  <div class="side-buttons">
+    <button class="tradebtn buy" id="buy">▲ КУПИТЬ</button>
+    <button class="tradebtn sell" id="sell">▼ ПРОДАТЬ</button>
+  </div>
+
+  <div class="note">
+    КУПИТЬ — прибыль, если цена вырастет.
+    ПРОДАТЬ — прибыль, если цена упадёт.
+    Сделку можно закрыть вручную.
+    Плечо увеличивает и прибыль, и убыток.
+    Убыток учитывается в общем капитале. При исчерпании капитала открытые позиции ликвидируются.
+  </div>
+
+</section>
+
+<section class="panel" style="margin-top:16px">
+  <h3 class="section-title">История результатов</h3>
+
+  <div class="row">
+    <span class="muted">Закрыто сделок</span>
+    <b id="closedCount">0</b>
+  </div>
+
+  <div class="row" style="margin-top:9px">
+    <span class="muted">Прибыль / убыток</span>
+    <b id="totalPnl">$0.00</b>
+  </div>
+
+  <div class="row" style="margin-top:9px">
+    <span class="muted">Успешных</span>
+    <b id="wins" class="positive">0</b>
+  </div>
+</section>
+</aside>
+</div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+let serverReady = false;
+const $ = id => document.getElementById(id);
+
+const assets = {
+  gold: {name:'Золото / XAUUSD', price:2650, vol:0.00065},
+  btc:  {name:'Bitcoin / BTCUSD', price:92000, vol:0.00135},
+  eth:  {name:'Ethereum / ETHUSD', price:3100, vol:0.0015}
+};
+
+let asset = 'gold';
+let price = assets.gold.price;
+let initialPrice = price;
+let balance = 0;
+
+let candles = [];
+let active = [];
+let history = [];
+let nextId = 1;
+
+let candle = {
+  open:price,
+  high:price,
+  low:price,
+  close:price,
+  start:Date.now()
+};
+
+// Управление направлением рынка
+let forceDirection = null;
+let forceRemaining = 0;
+let pendingDirection = null;
+
+const money = n => '$' + n.toLocaleString('en-US', {
+  minimumFractionDigits:2,
+  maximumFractionDigits:2
+});
+
+function updateMarketStatus() {
+  const status = $('marketStatus');
+
+  if (forceRemaining > 0 && forceDirection === 'up') {
+    status.textContent =
+      '▲ Рынок принудительно растёт · осталось свечей: ' + forceRemaining;
+    status.style.color = '#6dffc0';
+  } else if (forceRemaining > 0 && forceDirection === 'down') {
+    status.textContent =
+      '▼ Рынок принудительно падает · осталось свечей: ' + forceRemaining;
+    status.style.color = '#ff9da4';
+  } else if (pendingDirection) {
+    status.textContent = (pendingDirection==='up'?'▲':'▼') + ' Направление начнётся после закрытия текущей свечи';
+    status.style.color = pendingDirection==='up' ? '#6dffc0' : '#ff9da4';
+  } else {
+    status.textContent = 'Обычный случайный рынок · 1м';
+    status.style.color = '';
+  }
+}
+
+function seed() {
+  candles = [];
+  let p = price;
+
+  for (let i = 0; i < 39; i++) {
+    let o = p;
+    let c = o * (1 + (Math.random() - 0.5) * assets[asset].vol * 5);
+
+    candles.push({
+      open:o,
+      close:c,
+      high:Math.max(o,c) * (1 + Math.random()*assets[asset].vol),
+      low:Math.min(o,c) * (1 - Math.random()*assets[asset].vol)
+    });
+
+    p = c;
+  }
+
+  price = p;
+  initialPrice = p;
+
+  candle = {
+    open:p,
+    high:p,
+    low:p,
+    close:p,
+    start:Date.now()
+  };
+}
+
+function draw() {
+  const cv = $('chart');
+  const ctx = cv.getContext('2d');
+  const w = cv.width;
+  const h = cv.height;
+
+  ctx.clearRect(0,0,w,h);
+
+  const all = [...candles,candle];
+
+  const min = Math.min(...all.map(x=>x.low)) * 0.9995;
+  const max = Math.max(...all.map(x=>x.high)) * 1.0005;
+  const range = max-min || 1;
+
+  ctx.strokeStyle = '#1d2b3c';
+  ctx.lineWidth = 1;
+
+  for (let i=0; i<5; i++) {
+    let y = 15 + i*(h-35)/4;
+
+    ctx.beginPath();
+    ctx.moveTo(0,y);
+    ctx.lineTo(w,y);
+    ctx.stroke();
+
+    ctx.fillStyle = '#73869d';
+    ctx.font = '12px Arial';
+
+    ctx.fillText(
+      (max-(range*i/4)).toFixed(asset==='gold'?2:1),
+      8,
+      y-4
+    );
+  }
+
+  const slot = w/all.length;
+  const body = Math.max(5,slot*0.56);
+
+  all.forEach((c,i)=>{
+    let x = i*slot+slot/2;
+    let up = c.close >= c.open;
+    let color = up ? '#16c784' : '#ea3943';
+
+    let y = v => h-18-(v-min)/range*(h-38);
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+    ctx.moveTo(x,y(c.high));
+    ctx.lineTo(x,y(c.low));
+    ctx.stroke();
+
+    ctx.fillStyle = color;
+
+    let top = Math.min(y(c.open),y(c.close));
+    let bh = Math.max(2,Math.abs(y(c.open)-y(c.close)));
+
+    ctx.fillRect(x-body/2,top,body,bh);
+  });
+
+  // Линии входа открытых сделок
+  active.forEach(t=>{
+    if (t.entry < min || t.entry > max) return;
+
+    const ey = h-18-(t.entry-min)/range*(h-38);
+    const color = t.side==='buy' ? '#39a9ff' : '#ff9b58';
+
+    ctx.save();
+    ctx.setLineDash([7,4]);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+
+    ctx.beginPath();
+    ctx.moveTo(0,ey);
+    ctx.lineTo(w,ey);
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+    ctx.fillStyle = color;
+    ctx.font = 'bold 12px Arial';
+
+    ctx.fillText(
+      (t.side==='buy'?'BUY':'SELL') +
+      ' #' + t.id + ' вход ' +
+      t.entry.toFixed(asset==='gold'?2:1),
+      12,
+      Math.max(13,ey-5)
+    );
+
+    ctx.restore();
+  });
+
+  // Текущая цена
+  let py = h-18-(price-min)/range*(h-38);
+
+  ctx.setLineDash([5,4]);
+  ctx.strokeStyle = '#e8b84d';
+
+  ctx.beginPath();
+  ctx.moveTo(0,py);
+  ctx.lineTo(w,py);
+  ctx.stroke();
+
+  ctx.setLineDash([]);
+}
+
+function pnl(t) {
+  return (t.side==='buy'?1:-1) *
+    (price-t.entry)/t.entry *
+    t.amount *
+    t.leverage;
+}
+
+function render() {
+  $('assetName').textContent = assets[asset].name;
+  $('price').textContent = money(price);
+  $('statPrice').textContent = money(price);
+  $('balance').textContent = money(balance);
+  const lockedMargin = active.reduce((sum,t)=>sum+t.amount,0);
+  const equity = balance+lockedMargin+active.reduce((sum,t)=>sum+pnl(t),0);
+  const balanceSub = $('balance').nextElementSibling;
+  if (balanceSub) balanceSub.textContent = 'Свободный баланс · капитал: ' + money(Math.max(0,equity));
+
+  let pct = (price/initialPrice-1)*100;
+
+  $('change').textContent =
+    'Изменение: ' + (pct>=0?'+':'') + pct.toFixed(3) + '%';
+
+  $('change').className =
+    'sub ' + (pct>=0?'positive':'negative');
+
+  $('activeCount').textContent = active.length;
+  $('candleCount').textContent = candles.length+1;
+
+  const openTotal = active.reduce((sum,t)=>sum+pnl(t),0);
+
+  $('openTotal').textContent =
+    (openTotal>=0?'+':'') + money(openTotal);
+
+  $('openTotal').className =
+    openTotal>=0?'positive':'negative';
+
+  let total = history.reduce((s,x)=>s+x.pnl,0);
+  let wins = history.filter(x=>x.pnl>0).length;
+
+  $('closedCount').textContent = history.length;
+  $('totalPnl').textContent = (total>=0?'+':'')+money(total);
+  $('totalPnl').className = total>=0?'positive':'negative';
+  $('wins').textContent = wins;
+
+  $('trades').innerHTML = active.length
+    ? active.map(t=>{
+        let p = pnl(t);
+
+        return `
+          <div class="trade">
+            <div>
+              <b>${t.side==='buy'?'ПОКУПКА':'ПРОДАЖА'}</b>
+              <span class="tag ${t.side==='sell'?'selltag':''}">
+                ${t.side==='buy'?'BUY':'SELL'}
+              </span>
+
+              <div class="sub">
+                Сделка #${t.id} · залог ${money(t.amount)}
+                · плечо ${t.leverage}×
+              </div>
+
+              <div class="sub">
+                Точка входа: ${money(t.entry)}
+              </div>
+              <div class="trade-risk">
+                Стоп-лосс: <b>${t.stopPrice ? money(t.stopPrice) : 'выкл.'}</b>
+                · Тейк-профит: <b>${t.takePrice ? money(t.takePrice) : 'выкл.'}</b>
+              </div>
+
+              <button
+                class="reset"
+                style="margin-top:7px;color:#fff;border-color:#8b3942"
+                onclick="closeTrade(${t.id})">
+                Закрыть сделку
+              </button>
+            </div>
+
+            <div style="text-align:right">
+              <b class="${p>=0?'positive':'negative'}">
+                ${p>=0?'+':''}${money(p)}
+              </b>
+              <div class="sub">результат сделки</div>
+            </div>
+          </div>
+        `;
+      }).join('')
+    : '<div class="empty">Нет открытых сделок.</div>';
+
+  updateMarketStatus();
+}
+
+function openTrade(side) {
+  const amount = Number($('amount').value);
+  const stopPct = $('stopLoss').value === '' ? null : Number($('stopLoss').value);
+  const takePct = $('takeProfit').value === '' ? null : Number($('takeProfit').value);
+
+  if (!Number.isFinite(amount) || amount<=0) return alert('Введи корректную маржу сделки.');
+  if (amount>balance) return alert('На свободном балансе недостаточно средств.');
+  if (stopPct !== null && (!Number.isFinite(stopPct) || stopPct<=0 || stopPct>100)) return alert('Стоп-лосс должен быть от 0.01 до 100%.');
+  if (takePct !== null && (!Number.isFinite(takePct) || takePct<=0)) return alert('Тейк-профит должен быть больше 0%.');
+
+  const direction = side==='buy' ? 1 : -1;
+  const entry = price;
+  const stopPrice = stopPct===null ? null : entry*(1-direction*stopPct/100);
+  const takePrice = takePct===null ? null : entry*(1+direction*takePct/100);
+
+  balance -= amount;
+  active.push({id:nextId++,side,amount,leverage:Number($('leverage').value),entry,asset,stopPrice,takePrice});
+  render();
+}
+
+function closeTrade(id, reason='Закрыта вручную') {
+  const index = active.findIndex(t=>t.id===id);
+  if (index<0) return;
+  const t = active[index];
+  const result = pnl(t);
+  balance += t.amount+result;
+  if (balance<0) balance=0;
+  history.push({pnl:result,reason});
+  active.splice(index,1);
+  render();
+}
+
+function checkRiskLimits() {
+  for (const t of [...active]) {
+    if (!active.some(x=>x.id===t.id)) continue;
+    const stopHit = t.stopPrice!==null &&
+      ((t.side==='buy' && price<=t.stopPrice)||(t.side==='sell' && price>=t.stopPrice));
+    const takeHit = t.takePrice!==null &&
+      ((t.side==='buy' && price>=t.takePrice)||(t.side==='sell' && price<=t.takePrice));
+    if (stopHit) closeTrade(t.id,'Стоп-лосс');
+    else if (takeHit) closeTrade(t.id,'Тейк-профит');
+  }
+
+  // Общая ликвидация: если совокупный капитал счёта исчерпан, закрываем всё.
+  const locked = active.reduce((s,t)=>s+t.amount,0);
+  const floating = active.reduce((s,t)=>s+pnl(t),0);
+  const equity = balance+locked+floating;
+  if (active.length && equity<=0) {
+    for (const t of [...active]) {
+      const result=pnl(t);
+      history.push({pnl:result,reason:'Ликвидация'});
+    }
+    active=[];
+    balance=0;
+    $('marketStatus').textContent='⚠ ЛИКВИДАЦИЯ — весь капитал счёта потерян';
+    $('marketStatus').style.color='#ff6478';
+  }
+}
+
+// Принудительное движение рынка на две полные свечи
+function forceMarket(direction) {
+  const password = prompt('Пароль администратора для управления рынком:');
+  if (password === null) return;
+  socket.emit('admin-direction', { direction, password }, (result) => {
+    if (!result || !result.ok) {
+      alert(result?.error || 'Не удалось изменить рынок.');
+      return;
+    }
+    $('marketStatus').textContent = 'Команда принята сервером. Все игроки увидят изменение.';
+  });
+}
+
+function applyServerState(state) {
+  serverReady = true;
+  asset = state.asset;
+  $('asset').value = asset;
+  $('assetName').textContent = assets[asset].name;
+  price = state.price;
+  initialPrice = state.initialPrice;
+  candles = state.candles;
+  candle = state.candle;
+  forceDirection = state.forceDirection;
+  forceRemaining = state.forceRemaining;
+  pendingDirection = state.pendingDirection;
+  updateMarketStatus();
+  updateCandleTimer();
+  checkRiskLimits();
+  draw();
+  render();
+}
+
+socket.on('market-state', applyServerState);
+socket.on('connect', () => socket.emit('request-state'));
+socket.on('disconnect', () => {
+  $('marketStatus').textContent = 'Нет соединения с сервером — переподключение…';
+});
+
+function tick() {
+  // Цена и свечи приходят с сервера через Socket.IO. Локальный рынок не запускается.
+  if (!serverReady) return;
+  updateCandleTimer();
+}
+
+function updateCandleTimer() {
+  const left = Math.max(0, 60000 - (Date.now() - candle.start));
+  const seconds = Math.ceil(left / 1000);
+  const timer = $('candleTimer');
+  if (timer) timer.textContent =
+    String(Math.floor(seconds/60)).padStart(2,'0') + ':' +
+    String(seconds%60).padStart(2,'0');
+}
+
+// Кнопки сделок
+$('buy').onclick = ()=>openTrade('buy');
+$('sell').onclick = ()=>openTrade('sell');
+
+// Управление рынком
+$('forceUp').onclick = ()=>forceMarket('up');
+$('forceDown').onclick = ()=>forceMarket('down');
+
+// Плечо
+$('leverage').oninput = e=>{
+  $('leverageValue').textContent = e.target.value+'×';
+};
+
+// Пополнение и вывод демо-баланса с проверкой пароля
+
+function cashOperation(type) {
+  const amount = Number($('cashAmount').value);
+  const password = $('cashPassword').value;
+  const status = $('cashStatus');
+  status.style.color = '#ff9da4';
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    status.textContent = 'Ошибка: введи корректную сумму больше нуля.';
+    return;
+  }
+  if (!password) {
+    status.textContent = 'Введи пароль администратора.';
+    return;
+  }
+
+  socket.emit('verify-admin', { password }, (result) => {
+    if (!result || !result.ok) {
+      status.textContent = result?.error || 'Не удалось проверить пароль.';
+      return;
+    }
+    if (type === 'deposit') {
+      balance += amount;
+      status.style.color = '#6dffc0';
+      status.textContent = 'Успешно пополнено на ' + money(amount) + '.';
+    } else {
+      if (amount > balance) {
+        status.textContent = 'Ошибка: недостаточно средств для вывода.';
+        return;
+      }
+      balance -= amount;
+      status.style.color = '#6dffc0';
+      status.textContent = 'Успешно выведено ' + money(amount) + '.';
+    }
+    $('cashPassword').value = '';
+    render();
+  });
+}
+
+$('deposit').onclick = ()=>cashOperation('deposit');
+$('withdraw').onclick = ()=>cashOperation('withdraw');
+
+// Закрытие всех сделок
+$('closeAll').onclick = ()=>{
+  if (!active.length) {
+    alert('Нет открытых сделок.');
+    return;
+  }
+
+  if (!confirm('Закрыть все открытые сделки по текущей цене?')) return;
+
+  [...active].forEach(t=>closeTrade(t.id));
+
+  draw();
+  render();
+};
+
+// Смена актива
+$('asset').onchange = e=>{
+  socket.emit('set-asset', e.target.value);
+};
+
+// Полный сброс
+$('reset').onclick = ()=>{
+  if (!confirm('Сбросить баланс и всю историю?')) return;
+
+  balance = 0;
+
+  active = [];
+  history = [];
+  nextId = 1;
+
+  render();
+  draw();
+};
+
+// Запуск игры
+seed();
+draw();
+render();
+updateCandleTimer();
+
+setInterval(tick,250);
+</script>
+</body>
+</html>
